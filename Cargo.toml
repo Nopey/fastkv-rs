@@ -1,0 +1,20 @@
+[package]
+name = "fastkv-rs"
+version = "0.1.0"
+authors = ["Magnus Larsen <golgothasTerror101@gmail.com>"]
+edition = "2018"
+
+[features]
+default = ["conditions"]
+conditions = []
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = 'abort'
+# If I want a fancy flamegraph, set this.
+debug = true
+
+[dependencies]
+libc = "0.2.71"
+jemallocator = "0.3.2"

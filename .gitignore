@@ -1,0 +1,9 @@
+/target
+
+# reference impl in C
+/fastkv/
+
+# speed things
+flamegraph.svg
+perf.data
+perf.data.old
