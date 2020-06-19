@@ -12,6 +12,7 @@ version = "0.1.0"
 dependencies = [
  "jemallocator",
  "libc",
+ "persist-o-vec",
 ]
 
 [[package]]
@@ -46,3 +47,9 @@ name = "libc"
 version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
+
+[[package]]
+name = "persist-o-vec"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e2f6a0bd95e2a4c8035637b8d911c8e58d529672e4f4ee32eddc1aa4c96a885"

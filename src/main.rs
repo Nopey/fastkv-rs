@@ -1,4 +1,5 @@
 #![feature(const_transmute)]
+use persist_o_vec::Persist;
 
 // START fastkv.h
 #[derive(Debug)]
@@ -7,7 +8,7 @@ enum Item {
     String(*const u8),
     //DIFF: Length and size is stored as usize (uint64_t rather than uint32_t)
     // (makes Item take up 32 bytes :c)
-    Object(Vec<Pair>)
+    Object(Persist<Pair>)
 }
 
 #[derive(Debug)]
@@ -177,7 +178,7 @@ unsafe fn kv_parse(mut text: *mut u8, defs: &Vars) -> (*mut u8, Item) {
 	// results on most files. Anything over 64 is almost certain to slow
 	// down the kv_parse
     const OBJ_GUESS: usize = 8;
-    let mut object = Vec::with_capacity(OBJ_GUESS);
+    let mut object = Persist::with_capacity(OBJ_GUESS);
     
     text = skipws(text);
 
