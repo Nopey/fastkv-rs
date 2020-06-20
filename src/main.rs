@@ -236,21 +236,21 @@ impl Item{
         //DIFF: I don't care how ugly this function is, i don't want to spend any more time on it.
         match self{
             Item::String(s) => {
-                libc::printf("\t\"%s\"\n\0".as_ptr() as *const _, *s);
+                println!("\t\"{:?}\"", *s);
             },
             Item::Object(o) => {
                 // dont print {} for top level objects
-                if depth > 0 { libc::printf("{ // %d items\n\0".as_ptr() as *const _, o.len()); }
+                if depth > 0 { println!("{{ // {} items", o.len()); }
                 
                 for current in o.iter() {
-                    for _ in 0..depth { libc::printf("\t\0".as_ptr() as *const _); }
-                    libc::printf("\"%s\" \0".as_ptr() as *const _, current.key);
+                    for _ in 0..depth { print!("\t"); }
+                    print!("\"{:?}\" ", current.key);
                     current.value.printitem(depth + 1);
                 }
                 
                 if depth > 0 {
-                    for _ in 0..depth { libc::printf(b"\t\0".as_ptr() as *const _); }
-                    libc::printf("}\n\0".as_ptr() as *const _);
+                    for _ in 0..depth { print!("\t"); }
+                    println!("}}");
                 }
             }
         }
@@ -301,8 +301,10 @@ impl Item{
 // END fastkv.c
 
 // START main.c
-#[global_allocator]
-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
+// makes MSVC cry
+// #[global_allocator]
+// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 const HELP: &'static str =
 "FastKV-rs help
@@ -313,6 +315,12 @@ Usage:
 \tfastkv-rs [file] [query]
 \t<file>\tThe file to kv_parse
 \t<query>\tThe query. Format key.subkey.value";
+
+
+extern {
+    pub fn clock() -> ::libc::clock_t;
+}
+
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -336,28 +344,20 @@ fn main() {
     
     // just wrap this entire program in an unsafe block :)
     unsafe {
-        let q = query.map(|q| std::ffi::CString::new(q).unwrap());
+        let _q = query.map(|q| std::ffi::CString::new(q).unwrap());
         let defines = Vars(vec![b"X64\0".as_ptr(), b"X86_64\0".as_ptr(), b"LINUX\0".as_ptr()]);
 
-        // rust nerds are crying at this display of uninitialized memory.
-        let mut start   = libc::timeval{tv_sec: 0, tv_usec: 0};
-        let mut end     = libc::timeval{tv_sec: 0, tv_usec: 0};
-        use std::ptr::null_mut;
-	    libc::gettimeofday(&mut start, null_mut());
-        let (_, parsed) = kv_parse(text.as_mut_ptr(),&defines);
-        libc::gettimeofday(&mut end, null_mut());
-        if let Some(q) = q {
-            let result = parsed.query(q.as_ptr() as *const _);
-            match result {
-                Some(item) => item.printitem(0),
-                None => { libc::printf("The query failed\n\0".as_ptr() as *const _); }
-            }
+        let mut parse_total_time = 0;
+        let count = 10000;
+	    for _ in 0..count {
+            let mut text = text.clone();
+            let t = clock();
+            let (_, parsed) = kv_parse(text.as_mut_ptr(),&defines);
+            parse_total_time += clock() - t;
+            drop(parsed);
         }
-        let microsecs =
-            (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
-
-        println!("Parsing took: {} microseconds", microsecs);
-        println!("That means {} MBps", (text.len()-1) / microsecs as usize);
+        println!("Parsing took: {} ticks", parse_total_time as f32 / count as f32);
+        println!("Parsing took: {} ticks", parse_total_time as f32 / count as f32);
     }
 }
 // END main.c

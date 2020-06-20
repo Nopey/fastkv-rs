@@ -17,5 +17,6 @@ debug = true
 
 [dependencies]
 libc = "0.2.71"
-jemallocator = "0.3.2"
+# makes windows cry
+# jemallocator = "0.3.2"
 persist-o-vec = "0.3.0"
